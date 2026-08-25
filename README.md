@@ -324,12 +324,4 @@ without manually searching through every page of a document.
 * Additional document formats
 * Retrieval evaluation and benchmarking
 
----
-
-## Author
-
-**Rajat Murhe**
-
-B.Tech Computer Science Engineering
-
 ```
