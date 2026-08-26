@@ -1,0 +1,216 @@
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+
+const pool = require("./db/postgres");
+const redisClient = require("./db/redis");
+const { connectMongoDB } = require("./db/mongodb");
+
+const documentRoutes = require("./routes/document.routes");
+const { answerQuestion } = require("./services/rag.service");
+
+const app = express();
+
+const PORT = process.env.PORT || 5050;
+
+/* =====================================================
+   CORS
+===================================================== */
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+/* =====================================================
+   BODY PARSING
+===================================================== */
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* =====================================================
+   HEALTH
+===================================================== */
+
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+
+    res.json({
+      status: "OK",
+      message: "RAG PDF backend is running",
+      database: "PostgreSQL connected",
+      redis: redisClient.isOpen ? "connected" : "not connected",
+    });
+  } catch (error) {
+    console.error("Health check failed:", error.message);
+
+    res.status(500).json({
+      status: "ERROR",
+      message: "Database connection failed",
+      error: error.message,
+    });
+  }
+});
+
+/* =====================================================
+   PDF / DOCUMENT ROUTES
+===================================================== */
+
+app.use("/api/documents", documentRoutes);
+
+/* =====================================================
+   RAG QUERY
+===================================================== */
+
+app.post("/api/query", async (req, res) => {
+  try {
+    const { question, filename } = req.body;
+
+    if (
+      !question ||
+      typeof question !== "string" ||
+      !question.trim()
+    ) {
+      return res.status(400).json({
+        status: "ERROR",
+        message: "Question is required",
+      });
+    }
+
+    const cleanQuestion = question.trim();
+
+    console.log("========================================");
+    console.log("Query received:", cleanQuestion);
+    console.log(
+      "Selected document:",
+      filename || "ALL DOCUMENTS"
+    );
+    console.log("========================================");
+
+    const result = await answerQuestion(
+      cleanQuestion,
+      3,
+      filename || null
+    );
+
+    console.log("Query answered successfully");
+
+    return res.json({
+      status: "OK",
+      question: cleanQuestion,
+      filename: filename || null,
+      answer: result.answer,
+      sources: result.sources || [],
+    });
+  } catch (error) {
+    console.error("Query failed:", error);
+
+    return res.status(500).json({
+      status: "ERROR",
+      message:
+        error.message || "Failed to answer question",
+    });
+  }
+});
+
+/* =====================================================
+   ROOT
+===================================================== */
+
+app.get("/", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "RAG PDF API is running",
+    endpoints: {
+      health: "GET /api/health",
+      upload: "POST /api/documents/upload",
+      query: "POST /api/query",
+    },
+  });
+});
+
+/* =====================================================
+   404
+===================================================== */
+
+app.use((req, res) => {
+  res.status(404).json({
+    status: "ERROR",
+    message: "Route not found",
+    path: req.originalUrl,
+  });
+});
+
+/* =====================================================
+   ERROR HANDLER
+===================================================== */
+
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+
+  res.status(500).json({
+    status: "ERROR",
+    message:
+      err.message || "Internal server error",
+  });
+});
+
+/* =====================================================
+   START SERVER
+===================================================== */
+
+async function startServer() {
+  try {
+    await pool.query("SELECT 1");
+
+    console.log(
+      "PostgreSQL connected successfully"
+    );
+
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+      console.log("Redis connected successfully");
+    } else {
+      console.log("Redis already connected");
+    }
+
+    await connectMongoDB();
+
+    app.listen(PORT, () => {
+      console.log(
+        `Server running on http://localhost:${PORT}`
+      );
+
+      console.log(
+        `Health: http://localhost:${PORT}/api/health`
+      );
+
+      console.log(
+        `Upload: POST http://localhost:${PORT}/api/documents/upload`
+      );
+
+      console.log(
+        `Query: POST http://localhost:${PORT}/api/query`
+      );
+    });
+  } catch (error) {
+    console.error(
+      "Server startup failed:",
+      error
+    );
+
+    process.exit(1);
+  }
+}
+
+startServer();
