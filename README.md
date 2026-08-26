@@ -21,7 +21,7 @@ RAG Intelligence allows users to upload PDF documents, automatically process and
 
 The main workspace provides a centralized interface for interacting with uploaded documents. Users can upload PDFs, select an active document, and ask natural-language questions about the document content.
 
-<img src="docs/images/dashboard.png" width="100%"/>
+<img src="docs/dashboard.png" width="100%"/>
 
 The workspace is designed around a document-first interaction model, where retrieved information is used to generate grounded responses instead of relying only on general model knowledge.
 
@@ -31,7 +31,7 @@ The workspace is designed around a document-first interaction model, where retri
 
 The document management interface provides a centralized view of indexed PDF files.
 
-<img src="docs/images/documents.png" width="100%"/>
+<img src="docs/documents.png" width="100%"/>
 
 Each uploaded document is processed and indexed into the retrieval pipeline. Users can view available documents, identify the active document, switch between documents, and manage the indexed knowledge base.
 
@@ -41,7 +41,7 @@ Each uploaded document is processed and indexed into the retrieval pipeline. Use
 
 RAG Intelligence includes a dedicated semantic search interface for retrieving information across indexed documents.
 
-<img src="docs/images/search-feature.png" width="100%"/>
+<img src="docs/search-feature.png" width="100%"/>
 
 Instead of depending only on exact keyword matching, the system represents document content and user queries as vectors and performs similarity-based retrieval.
 
@@ -69,7 +69,7 @@ This allows conceptually related information to be retrieved even when the wordi
 
 The conversational interface allows users to ask questions directly about an uploaded document.
 
-<img src="docs/images/chat1.png" width="100%"/>
+<img src="docs/chat1.png" width="100%"/>
 
 When a question is submitted, the retrieval pipeline identifies relevant document chunks and provides them as context for the generated response.
 
@@ -81,7 +81,7 @@ The interface also exposes the retrieved sources and their similarity scores, ma
 
 Users can upload PDF documents directly through the workspace.
 
-<img src="docs/images/uploaded.png" width="100%"/>
+<img src="docs/uploaded.png" width="100%"/>
 
 After upload, the document enters the processing pipeline where its content is extracted, divided into manageable chunks, converted into vector embeddings, and stored for semantic retrieval.
 
@@ -323,13 +323,5 @@ without manually searching through every page of a document.
 * Advanced metadata filtering
 * Additional document formats
 * Retrieval evaluation and benchmarking
-
----
-
-## Author
-
-**Rajat Murhe**
-
-B.Tech Computer Science Engineering
 
 ```
